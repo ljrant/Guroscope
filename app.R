@@ -112,10 +112,10 @@ rownames(aspect_data) <- combined_data$Subject
 ui <- fluidPage(
   theme = bslib::bs_theme(
     version = 5,
-    bg = "#1A1A1A",       # Very dark background
-    fg = "#FFFFFF",       # White foreground text
-    primary = "#F24C0C",  # Bold orange
-    secondary = "#F4C542",# Yellow-gold accent
+    bg = "#1A1A1A",
+    fg = "#FFFFFF",
+    primary = "#F24C0C",
+    secondary = "#F4C542",
     base_font = bslib::font_google("Montserrat")
   ),
 
@@ -157,44 +157,43 @@ ui <- fluidPage(
 
   titlePanel("Guroscope"),
 
-  sidebarLayout(
-    sidebarPanel(
+  fluidRow(
+    column(width = 1,
       radioButtons("method", "Ordination Method", choices = c("PCA", "NMDS"), inline = TRUE),
       numericInput("nmds_seed", "NMDS Seed", value = 42),
       uiOutput("axis_select_ui"),
-      radioButtons("selectedTrait", "Highlight Trait", choices = c("None", binary_vars), selected = "None"),
-      width = 2
+      radioButtons("selectedTrait", "Highlight Trait", choices = c("None", binary_vars), selected = "None")
     ),
-    mainPanel(
-      fluidRow(
-        column(width = 8,
-               plotOutput("skyPlot", height = "1000px", click = "plot_click")
-        ),
-        column(width = 4,
-               fluidRow(
-                 column(width = 6, uiOutput("subjectProfile1")),
-                 column(width = 6, uiOutput("subjectProfile2"))
-               )
-        )
-      ),
-      fluidRow(
-        column(width = 12,
-               tags$h4("Gurometry Scores"),
-               uiOutput("decoderScores1"),
-               tags$hr(style = "border-color: white;"),
-               uiOutput("decoderScores2")
-        )
-      ),
-      # Attribution line goes here
-      tags$div(
-        style = "margin-top: 20px; font-size: 12px; text-align: center; color: gray;",
-         HTML(' • Gurometry by Chris Kavanagh and Matt Browne, from the <a href="https://decodingthegurus.com" style="color: #F4C542;" target="_blank">Decoding the Gurus</a> podcast'),
-HTML('Cursor icon by <a href="https://icons8.com/icon/123267/illuminati" style="color: #F4C542;" target="_blank">Icons8</a>')
 
+    column(width = 7,
+      plotOutput("skyPlot", height = "1000px", click = "plot_click")
+    ),
+
+    column(width = 4,
+      fluidRow(
+        column(width = 6, uiOutput("subjectProfile1")),
+        column(width = 6, uiOutput("subjectProfile2"))
       )
     )
+  ),
+
+  fluidRow(
+    column(width = 12,
+      tags$h4("Gurometry Scores"),
+      uiOutput("decoderScores1"),
+      tags$hr(style = "border-color: white;"),
+      uiOutput("decoderScores2")
+    )
+  ),
+
+  tags$div(
+    style = "margin-top: 20px; font-size: 12px; text-align: center; color: gray;",
+    HTML('• Gurometry by Chris Kavanagh and Matt Browne, from the <a href="https://decodingthegurus.com" style="color: #F4C542;" target="_blank">Decoding the Gurus</a> podcast<br>'),
+    HTML('Cursor icon by <a href="https://icons8.com/icon/123267/illuminati" style="color: #F4C542;" target="_blank">Icons8</a>')
   )
 )
+
+
 
 
 
