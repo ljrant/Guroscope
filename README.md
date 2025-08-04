@@ -1,7 +1,7 @@
 # Guroscope
 Interactive R Shiny web app that visualizes Gurometry score profiles of secular gurus rated by the Decoding the Gurus podcast. For ordinationGurometry scores from all decoders are averaged, and profiles are compared using ordination methods (PCA). Gurus appear as selectable "stars" in 2D "guruscape", clicking on  stars allows side-by-side comparisons of Gurus profiles and traits in side panel.
 
-screenshot of Guroscope at work:
+Screenshot of Guroscope:
 ![Screenshot of Guroscope](SCREENSHOT.png)
 
 ## Features
