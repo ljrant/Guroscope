@@ -1,11 +1,11 @@
 # Guroscope
-Interactive R Shiny web app that visualizes Gurometry score profiles of secular gurus rated by the Decoding the Gurus podcast. Decoding scores are averaged, and profiles are compared using ordination methods (PCA or NMDS. Subjects appear as selectable "stars" in 2D guruscape, side-by-side comparisons of profiles and and guru traits. in side panel.
+Interactive R Shiny web app that visualizes Gurometry score profiles of secular gurus rated by the Decoding the Gurus podcast. For ordinationGurometry scores from all decoders are averaged, and profiles are compared using ordination methods (PCA). Gurus appear as selectable "stars" in 2D "guruscape", clicking on  stars allows side-by-side comparisons of Gurus profiles and traits in side panel.
 
 ## Features
 - Data pulled directly from Google Sheets
-- Interactive Guruscape  (2D ordination plot using either PCA or NMDS of averaged gurumetry scores for ordination). Axis can be rotated for alternative guroscopy. by default PCA1 and PCA2 are used, for PCA the highest scoring Gurus cluster  on the right field of Guruscape. 
+- Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. by default PCA1 and PCA2 axis are used for ordination as PCA captures most of the differences between gurometry scores most of the variation is captured by PCA1 meaning high scoring gurus cluster on one end while low scoring gurus on the other end of PCA1. PCA2 might most be on shilling supplements.
 - Clickable stars (gurus) to explore individual profiles. The Guru profiles view on right hand panel. individual gurometry scores by different decoders display in bottom panel.
-- Binary traits (e.g., "Monomania", "Broicity") color-coded may be highligted as different coloured stars in the guroscape. 
+- Binary traits (e.g., "Monomania", "Broicity") color-coded may be highligted as different coloured stars in the "guroscape". 
 
 ## Installation
 
@@ -29,6 +29,20 @@ vegan – Ordination (PCA/NMDS)
 googlesheets4 – Real-time data import
 bslib – Custom Bootstrap 5 theme
 
+
+#### Work in progress::: list of potential features & stuff to be added
+
+Guru sidepanel (right panel): 
+* Add Automated highlighting  of the main differences between chosen Gurus gurumetry scores 
+
+Main guruscape / main plot:
+* Adjust the cursor icon for easier selection of gurus from the guruscape for comparisons
+* add functionality to plot single attribute comparisons as biplot scores (as arrows) on the ordination plot 
+* adding functional NMDS ordination and maybe some other ordination methods to the plot
+
+Other stuff
+*separate tab for cluster analysis for some Guru phylogeny visualizations
+
 ##### What Is Gurometry?
 
 *Gurometry* is a satirical rating framework developed by [Chris Kavanagh](https://twitter.com/C_Kavanagh) and [Matt Browne](https://twitter.com/ArthurCDent) for their podcast *Decoding the Gurus*. It rates self-proclaimed intellectuals or “secular gurus” based on recurring traits like "Galaxy Brainness" and "Conspiracy Mongering."
@@ -40,3 +54,4 @@ Gurometry: by Chris Kavanagh & Matt Browne, from the Decoding the Gurus podcast
 Cursor icon: Illuminati icon by Icons8
 
 This project is for entertainment purposes only. It is not affiliated with or endorsed by the Decoding the Gurus podcast.
+
