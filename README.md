@@ -36,6 +36,7 @@ bslib – Custom Bootstrap 5 theme
 #### Work in progress::: list of potential features & stuff to be added
 
 Guru sidepanel (right panel): 
+* Rework how gurometry scores are compared and visualized. get rid of redundant headers. 
 * Add Automated highlighting  of the main differences between chosen Gurus gurumetry scores 
 
 Main guruscape / main plot:
