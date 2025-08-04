@@ -1,6 +1,9 @@
 # Guroscope
 Interactive R Shiny web app that visualizes Gurometry score profiles of secular gurus rated by the Decoding the Gurus podcast. For ordinationGurometry scores from all decoders are averaged, and profiles are compared using ordination methods (PCA). Gurus appear as selectable "stars" in 2D "guruscape", clicking on  stars allows side-by-side comparisons of Gurus profiles and traits in side panel.
 
+screenshot of Guroscope at work:
+![Screenshot of Guroscope](SCREENSHOT.png)
+
 ## Features
 - Data pulled directly from Google Sheets
 - Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. by default PCA1 and PCA2 axis are used for ordination as PCA captures most of the differences between gurometry scores most of the variation is captured by PCA1 meaning high scoring gurus cluster on one end while low scoring gurus on the other end of PCA1. PCA2 might most be on shilling supplements.
