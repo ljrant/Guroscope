@@ -179,7 +179,7 @@ ui <- fluidPage(
 
   fluidRow(
     column(width = 12,
-      tags$h4("Gurometry Scores"),
+      tags$h4("Gurometry Scores by Decoder"),
       uiOutput("decoderScores1"),
       tags$hr(style = "border-color: white;"),
       uiOutput("decoderScores2")
