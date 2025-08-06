@@ -107,13 +107,24 @@ rownames(aspect_data) <- combined_data$Subject
 
 # ---- 7. Shiny App with Plotly and always-visible names ----
 ui <- fluidPage(
-  theme = bslib::bs_theme(version = 5, bg = "#1A1A1A", fg = "#FFFFFF", primary = "#F24C0C", secondary = "#F4C542", base_font = bslib::font_google("Montserrat")),
+  theme = bslib::bs_theme(
+    version = 5,
+    bg = "#1A1A1A",
+    fg = "#FFFFFF",
+    primary = "#F24C0C",
+    secondary = "#F4C542",
+    base_font = bslib::font_google("Montserrat")
+  ),
 
-  tags$style(HTML("#skyplot-wrapper:hover {
-    cursor: url('https://img.icons8.com/fluency-systems-regular/48/FFFFFF/illuminati-symbol.png') 16 16, auto;
-  }")),
+  # Illuminati cursor icon when hovering over the plot
+  tags$style(HTML("
+    #skyplot-wrapper:hover {
+      cursor: url('https://img.icons8.com/fluency-systems-regular/48/FFFFFF/illuminati-symbol.png') 16 16, auto;
+    }
+  ")),
 
   titlePanel("Guroscope"),
+
   fluidRow(
     column(1,
       radioButtons("method", "Ordination Method", choices = c("PCA", "NMDS"), inline = TRUE),
@@ -121,7 +132,9 @@ ui <- fluidPage(
       uiOutput("axis_select_ui"),
       radioButtons("selectedTrait", "Highlight Trait", choices = c("None", binary_vars), selected = "None")
     ),
-    column(7, div(id = "skyplot-wrapper", plotlyOutput("skyPlot", height = "1000px"))),
+    column(7,
+      div(id = "skyplot-wrapper", plotlyOutput("skyPlot", height = "1000px"))
+    ),
     column(4,
       fluidRow(
         column(6, uiOutput("subjectProfile1")),
@@ -129,6 +142,7 @@ ui <- fluidPage(
       )
     )
   ),
+
   fluidRow(
     column(12,
       tags$h4("Gurometry Scores by Decoder"),
@@ -136,6 +150,13 @@ ui <- fluidPage(
       tags$hr(style = "border-color: white;"),
       uiOutput("decoderScores2")
     )
+  ),
+
+  # Credits
+  tags$div(
+    style = "margin-top: 20px; font-size: 12px; text-align: center; color: gray;",
+    HTML('• Gurometry by Chris Kavanagh and Matt Browne, from the <a href="https://decodingthegurus.com" style="color: #F4C542;" target="_blank">Decoding the Gurus</a> podcast<br>'),
+    HTML('Cursor icon by <a href="https://icons8.com/icon/123267/illuminati" style="color: #F4C542;" target="_blank">Icons8</a>')
   )
 )
 
