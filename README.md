@@ -6,8 +6,8 @@ Screenshot of Guroscope:
 
 ## Features of the app
 - Data pulled (and cleaned) directly from Google Sheets  
-- Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. by default PCA1 and PCA2 axis are used for ordination as PCA captures most of the differences between gurometry scores most of the variation is captured by PCA1 meaning high scoring gurus cluster on one end while low scoring gurus on the other end of PCA1. PCA2 might most be on shilling supplements.
-- Clickable stars (gurus) to explore individual profiles. The Guru profiles view on right hand panel. individual gurometry scores by different decoders display in bottom panel.
+- Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. by default PCA1 and PCA2 axis are used for ordination as PCA captures most of the differences between gurometry scores most of the variation is captured by PCA1 meaning high scoring gurus cluster on one end while low scoring gurus on the other end of PCA1. 
+- Clickable stars (gurus) to explore individual profiles. The Guru profiles view on right hand panel. individual gurometry scores by different decoders displayed in bottom panel as table.
 - Binary traits (e.g., "Monomania", "Broicity") color-coded may be highligted as different coloured stars in the "guroscape".
 - May be  deployed on a website using [R Shiny](https://shiny.posit.co/)
 
@@ -36,14 +36,14 @@ bslib – Custom Bootstrap 5 theme
 
 #### Work in progress::: list of potential features & stuff to be added
 
+Main plot / "Guruscape"
+* Adjust the cursor icon for easier selection of gurus from the guruscape for comparisons
+* add functionality to plot Correlation circle as a "minimap" to aid in interpretation of the ordination axis
+* adding functional NMDS ordination and maybe some other ordination methods
+
 Guru sidepanel (right panel): 
 * Rework how gurometry scores are compared and visualized. get rid of redundant headers. 
 * Add Automated highlighting  of the main differences between chosen Gurus gurumetry scores 
-
-Main plot / "Guruscape"
-* Adjust the cursor icon for easier selection of gurus from the guruscape for comparisons
-* add functionality to plot single attribute comparisons as biplot scores (as arrows) on the ordination plot 
-* adding functional NMDS ordination and maybe some other ordination methods to the plot
 
 Other stuff
 *separate tab for cluster analysis for some Guru phylogeny visualizations
