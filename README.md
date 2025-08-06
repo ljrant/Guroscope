@@ -9,7 +9,7 @@ Screenshot of Guroscope:
 - Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. by default PCA1 and PCA2 axis are used for ordination as PCA captures most of the differences between gurometry scores most of the variation is captured by PCA1 meaning high scoring gurus cluster on one end while low scoring gurus on the other end of PCA1. PCA2 might most be on shilling supplements.
 - Clickable stars (gurus) to explore individual profiles. The Guru profiles view on right hand panel. individual gurometry scores by different decoders display in bottom panel.
 - Binary traits (e.g., "Monomania", "Broicity") color-coded may be highligted as different coloured stars in the "guroscape".
-- May be hosted on server using [Shiny](https://shiny.posit.co/)
+- May be deployed and hosted on server using [Shiny](https://shiny.posit.co/)
 
 ## Installation
 
