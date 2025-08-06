@@ -5,21 +5,18 @@ install_and_load <- function(pkgs) {
     library(pkg, character.only = TRUE)
   }
 }
-install_and_load(c("googlesheets4", "dplyr", "readr", "stringr", "shiny", "vegan", "ggplot2", "RColorBrewer", "tidyr", "ggrepel", "bslib"))
+install_and_load(c("googlesheets4", "dplyr", "readr", "stringr", "shiny", "vegan", "ggplot2", "plotly", "RColorBrewer", "tidyr", "ggrepel", "bslib"))
 
 # ---- 2. Read Google Sheet with all values as characters ----
 gs4_deauth()
 url <- "https://docs.google.com/spreadsheets/d/1Oe-af4_OmzLJavktcSKGfP0wmxCX0ppP8n_Tvi9l_yc"
 raw <- read_sheet(url, col_types = "c", col_names = FALSE, skip = 1)
 
-# Replace fraction and special symbols before parsing
-raw <- raw %>%
-  mutate(across(everything(), ~ str_replace_all(., c("\u00bd" = "0.5", "1/2" = "0.5"))))
+raw <- raw %>% mutate(across(everything(), ~ str_replace_all(., c("\u00bd" = "0.5", "1/2" = "0.5"))))
 
-# ---- 3. Extract decoder blocks using CK header ----
+# ---- 3. Extract decoder blocks ----
 decoder_rows <- which(raw[[1]] %in% c("CK", "MB", "RK"))
 decoder_data <- list()
-
 ck_header_row <- decoder_rows[1]
 ck_header <- as.character(unlist(raw[ck_header_row, ]))
 ck_header[is.na(ck_header) | ck_header == ""] <- paste0("X", which(is.na(ck_header) | ck_header == ""))
@@ -108,113 +105,42 @@ aspect_data <- aspect_data[rowSums(is.na(aspect_data)) < length(aspect_vars), ]
 aspect_data <- aspect_data[, apply(aspect_data, 2, function(x) var(x, na.rm = TRUE) > 0)]
 rownames(aspect_data) <- combined_data$Subject
 
-# ---- 7. Shiny App ----
+# ---- 7. Shiny App with Plotly and always-visible names ----
 ui <- fluidPage(
-  theme = bslib::bs_theme(
-    version = 5,
-    bg = "#1A1A1A",
-    fg = "#FFFFFF",
-    primary = "#F24C0C",
-    secondary = "#F4C542",
-    base_font = bslib::font_google("Montserrat")
-  ),
+  theme = bslib::bs_theme(version = 5, bg = "#1A1A1A", fg = "#FFFFFF", primary = "#F24C0C", secondary = "#F4C542", base_font = bslib::font_google("Montserrat")),
 
-  tags$style(HTML("#skyPlot:hover { cursor: url('https://img.icons8.com/fluency-systems-regular/48/FFFFFF/illuminati-symbol.png') 16 16, auto; }")),
-
-  tags$style(HTML("
-    h1, h2, h3, h4, h5, h6, label, .btn {
-      font-family: 'Montserrat', sans-serif;
-    }
-
-    .btn {
-      background-color: #F24C0C;
-      border-color: #F24C0C;
-      color: white;
-    }
-
-    .btn:hover {
-      background-color: #d03f00;
-      border-color: #d03f00;
-    }
-
-    .form-check-input:checked {
-      background-color: #F24C0C;
-      border-color: #F24C0C;
-    }
-
-    .progress {
-      background-color: #333;
-    }
-
-    .progress::-webkit-progress-value {
-      background-color: #F4C542;
-    }
-
-    table, th, td {
-      color: white;
-    }
-  ")),
+  tags$style(HTML("#skyplot-wrapper:hover {
+    cursor: url('https://img.icons8.com/fluency-systems-regular/48/FFFFFF/illuminati-symbol.png') 16 16, auto;
+  }")),
 
   titlePanel("Guroscope"),
-
   fluidRow(
-    column(width = 1,
+    column(1,
       radioButtons("method", "Ordination Method", choices = c("PCA", "NMDS"), inline = TRUE),
       numericInput("nmds_seed", "NMDS Seed", value = 42),
       uiOutput("axis_select_ui"),
       radioButtons("selectedTrait", "Highlight Trait", choices = c("None", binary_vars), selected = "None")
     ),
-
-    column(width = 7,
-      plotOutput("skyPlot", height = "1000px", click = "plot_click")
-    ),
-
-    column(width = 4,
+    column(7, div(id = "skyplot-wrapper", plotlyOutput("skyPlot", height = "1000px"))),
+    column(4,
       fluidRow(
-        column(width = 6, uiOutput("subjectProfile1")),
-        column(width = 6, uiOutput("subjectProfile2"))
+        column(6, uiOutput("subjectProfile1")),
+        column(6, uiOutput("subjectProfile2"))
       )
     )
   ),
-
   fluidRow(
-    column(width = 12,
+    column(12,
       tags$h4("Gurometry Scores by Decoder"),
       uiOutput("decoderScores1"),
       tags$hr(style = "border-color: white;"),
       uiOutput("decoderScores2")
     )
-  ),
-
-  tags$div(
-    style = "margin-top: 20px; font-size: 12px; text-align: center; color: gray;",
-    HTML('• Gurometry by Chris Kavanagh and Matt Browne, from the <a href="https://decodingthegurus.com" style="color: #F4C542;" target="_blank">Decoding the Gurus</a> podcast<br>'),
-    HTML('Cursor icon by <a href="https://icons8.com/icon/123267/illuminati" style="color: #F4C542;" target="_blank">Icons8</a>')
   )
 )
 
-
-
-
-
 server <- function(input, output, session) {
   selected_subjects <- reactiveVal(c())
-
-  observeEvent(input$plot_click, {
-    coords <- nearPoints(site_scores(), input$plot_click, threshold = 10, maxpoints = 1)
-    if (nrow(coords) > 0) {
-      clicked <- coords$Subject[1]
-      current <- selected_subjects()
-      updated <- if (clicked %in% current) {
-        current[current != clicked]
-      } else if (length(current) < 2) {
-        c(current, clicked)
-      } else {
-        c(current[2], clicked)
-      }
-      selected_subjects(updated)
-    }
-  })
 
   output$axis_select_ui <- renderUI({
     axes <- if (input$method == "PCA") c("PCA1", "PCA2") else c("NMDS1", "NMDS2")
@@ -251,18 +177,16 @@ server <- function(input, output, session) {
     df
   })
 
-  output$skyPlot <- renderPlot({
+  output$skyPlot <- renderPlotly({
     df <- site_scores()
     palette <- c("None" = "gray60")
     if (input$selectedTrait != "None") palette[input$selectedTrait] <- "orange"
 
-    ggplot(df, aes_string(x = input$axis1, y = input$axis2)) +
-      geom_point(aes(color = TraitColor, alpha = Percentage, size = Average), shape = 8) +
-      geom_text_repel(aes(label = Subject), size = 4.2, color = "white") +
+    p <- ggplot(df, aes_string(x = input$axis1, y = input$axis2)) +
+      geom_point(aes(color = TraitColor, alpha = Percentage, size = Average, key = Subject, text = Subject), shape = 8) +
       scale_color_manual(values = palette) +
       scale_alpha(range = c(0.1, 1)) +
       scale_size(range = c(2, 8)) +
-      labs(x = input$axis1, y = input$axis2) +
       theme_minimal(base_size = 14) +
       theme(
         legend.position = "none",
@@ -273,7 +197,37 @@ server <- function(input, output, session) {
         axis.text = element_text(color = "white"),
         axis.title = element_text(color = "white")
       )
+
+    gg <- ggplotly(p, tooltip = "text") %>% layout(dragmode = "zoom")
+
+    gg %>% add_text(
+      data = df,
+      x = ~get(input$axis1),
+      y = ~get(input$axis2),
+      text = ~Subject,
+      textposition = "top center",
+      textfont = list(color = "white", size = 12),
+      inherit = FALSE,
+      showlegend = FALSE
+    )
   })
+
+  observeEvent(event_data("plotly_click"), {
+    click <- event_data("plotly_click")
+    if (!is.null(click)) {
+      clicked <- click$key
+      current <- selected_subjects()
+      updated <- if (clicked %in% current) {
+        current[current != clicked]
+      } else if (length(current) < 2) {
+        c(current, clicked)
+      } else {
+        c(current[2], clicked)
+      }
+      selected_subjects(updated)
+    }
+  })
+
 
   make_profile_ui <- function(subj) {
     if (is.null(subj)) return(NULL)
