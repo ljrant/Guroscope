@@ -211,27 +211,42 @@ ui <- fluidPage(
       )
     ),
     tabPanel(
-      "About the ordination",
+      "About",
       tags$div(
         style = "padding: 16px; max-width: 900px;",
-        tags$h3("How the ordination works"),
-        tags$p("You can choose a similarity index (Euclidean, Manhattan, or Cosine). The app computes a distance matrix using that index and applies an ordination method:"),
-        tags$ul(
-          tags$li(tags$b("PCA tab = PCoA:"), " we perform Principal Coordinates Analysis (PCoA) on the chosen distance matrix via ",
-                  tags$code("vegan::capscale(comm ~ 1, distance = ...)"), "."),
-          tags$li(tags$b("NMDS tab:"), " we run non-metric multidimensional scaling via ",
-                  tags$code("vegan::metaMDS(comm, distance = ...)"), ".")
+        tags$h3("About this app"),
+        tags$p("This app visualizes Gurometer profiles — ratings on multiple attributes scored from 0 to 5 — in a 2D plot using ordination. Gurus with similar rating patterns appear closer together, while those with different patterns appear farther apart."),
+        
+        tags$h4("How the data is prepared"),
+        tags$ol(
+          tags$li("Ratings are loaded from a Google Sheet containing numeric ratings for each guru across graded attributes and binary traits."),
+          tags$li("Special cases like “½” are converted to numeric form, and subject name inconsistencies are fixed."),
+          tags$li("If multiple raters scored the same guru, the mean rating per attribute is calculated across raters; binary traits are summarised by the maximum recorded value."),
+          tags$li("Attributes with zero variance (same score for all gurus) are removed; gurus with missing values for all graded attributes are excluded."),
+          tags$li("For Cosine similarity only, each guru’s ratings are normalised to unit length so that distances depend on the pattern of ratings, not their absolute magnitude.")
         ),
-        tags$h4("Cosine option"),
-        tags$p("For Cosine, rows are first scaled to unit length with ",
-               tags$code("vegan::decostand(method = 'normalize', MARGIN = 1)"),
-               ", then Euclidean distances on these unit vectors are used. On unit vectors, Euclidean distance is a monotonic transform of Cosine similarity."),
-        tags$h4("Euclidean & Manhattan options"),
-        tags$p("For Euclidean and Manhattan, raw attribute profiles are used directly with the chosen distance."),
+        
+        tags$h4("How the ordination is computed"),
+        tags$p("You can choose a similarity index (Euclidean, Manhattan, or Cosine). The app computes a distance matrix using that index and applies one of two ordination methods:"),
+        tags$ul(
+          tags$li(tags$b("PCA tab = PCoA:"), " Principal Coordinates Analysis is performed on the chosen distance matrix using ", tags$code("vegan::capscale(comm ~ 1, distance = ...)"), "."),
+          tags$li(tags$b("NMDS tab:"), " Non-metric multidimensional scaling is run using ", tags$code("vegan::metaMDS(comm, distance = ...)"), ", which preserves the rank order of distances.")
+        ),
+        
+        tags$h4("Distance index options"),
+        tags$ul(
+          tags$li(tags$b("Cosine:"), " Ratings are first scaled to unit length with ", tags$code("vegan::decostand(method = 'normalize', MARGIN = 1)"),
+                  ", then Euclidean distances on these unit vectors are computed. On unit vectors, Euclidean distance is a monotonic transform of Cosine similarity."),
+          tags$li(tags$b("Euclidean:"), " Raw rating profiles are compared directly using Euclidean distance."),
+          tags$li(tags$b("Manhattan:"), " Raw rating profiles are compared using the sum of absolute differences.")
+        ),
+        
         tags$h4("Similarity % in the side panel"),
-        tags$p("The side panel shows the similarity between the two selected gurus as a percentage: ",
-               "for Euclidean and Manhattan this is a linear rescale of distance relative to the 0–5 score range; ",
-               "for Cosine it is the cosine similarity × 100%.")
+        tags$p("When you select exactly two gurus, the side panel shows their similarity as a percentage:"),
+        tags$ul(
+          tags$li("For Euclidean and Manhattan: a linear rescale of the distance relative to the maximum possible distance given the 0–5 score range."),
+          tags$li("For Cosine: the cosine similarity multiplied by 100%.")
+        )
       )
     )
   )
@@ -461,3 +476,4 @@ server <- function(input, output, session) {
 
 # run the app
 guroscope <- shinyApp(ui, server)
+guroscope
