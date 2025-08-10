@@ -108,8 +108,7 @@ aspect_data <- aspect_data[rowSums(is.na(aspect_data)) < length(aspect_vars), ]
 aspect_data <- aspect_data[, apply(aspect_data, 2, function(x) var(x, na.rm = TRUE) > 0)]
 rownames(aspect_data) <- combined_data$Subject
 
-# ---- 6b. Cosine % similarity using vegan (normalize + vegdist) ----
-# Normalize rows -> Euclidean distance -> convert to cosine similarity
+# ---- 6b. Similarity helpers (vegan where possible) ----
 cosine_pct_vegan <- function(x, y) {
   xy <- rbind(x, y)
   ok <- stats::complete.cases(t(xy))
@@ -124,7 +123,38 @@ cosine_pct_vegan <- function(x, y) {
   100 * max(min(cos_sim, 1), 0)
 }
 
-# ---- 7. Shiny App (cosine-based ordination) ----
+distance_pct <- function(x, y, method) {
+  k <- sum(!is.na(x) & !is.na(y))
+  if (k == 0) return(NA_real_)
+  if (method == "cosine") {
+    return(cosine_pct_vegan(x, y))
+  } else {
+    xy <- rbind(x, y)
+    ok <- stats::complete.cases(t(xy))
+    xy <- xy[, ok, drop = FALSE]
+    if (ncol(xy) == 0) return(NA_real_)
+    d <- as.numeric(vegan::vegdist(xy, method = method))
+    if (method == "euclidean") {
+      return(100 * (1 - d / (5 * sqrt(k))))
+    } else if (method == "manhattan") {
+      return(100 * (1 - d / (5 * k)))
+    } else {
+      return(NA_real_)
+    }
+  }
+}
+
+# Map UI label & Wikipedia link for the chosen index
+index_meta <- function(method) {
+  switch(tolower(method),
+    "euclidean" = list(label = "Euclidean similarity index", url = "https://en.wikipedia.org/wiki/Euclidean_distance"),
+    "manhattan" = list(label = "Manhattan similarity index", url = "https://en.wikipedia.org/wiki/Manhattan_distance"),
+    "cosine"    = list(label = "Cosine similarity index",    url = "https://en.wikipedia.org/wiki/Cosine_similarity"),
+    list(label = "Similarity index", url = "#")
+  )
+}
+
+# ---- 7. Shiny App ----
 ui <- fluidPage(
   theme = bslib::bs_theme(
     version = 5,
@@ -134,49 +164,76 @@ ui <- fluidPage(
     secondary = "#F4C542",
     base_font = bslib::font_google("Montserrat")
   ),
-
-  # Illuminati cursor icon when hovering over the plot
-  tags$style(HTML("
-    #skyplot-wrapper:hover {
-      cursor: url('https://img.icons8.com/fluency-systems-regular/48/FFFFFF/illuminati-symbol.png') 16 16, auto;
-    }
-  ")),
-
   titlePanel("Guroscope"),
 
-  fluidRow(
-    column(1,
-      radioButtons("method", "Ordination Method", choices = c("PCA", "NMDS"), inline = TRUE),
-      numericInput("nmds_seed", "NMDS Seed", value = 42),
-      uiOutput("axis_select_ui"),
-      radioButtons("selectedTrait", "Highlight Trait", choices = c("None", binary_vars), selected = "None")
-    ),
-    column(7,
-      div(id = "skyplot-wrapper", plotlyOutput("skyPlot", height = "1000px"))
-    ),
-    column(4,
-      uiOutput("similarityPanel"),
+  tabsetPanel(
+    id = "main_tabs",
+    tabPanel(
+      "Explore",
+      tags$style(HTML("
+        #skyplot-wrapper:hover {
+          cursor: url('https://img.icons8.com/fluency-systems-regular/48/FFFFFF/illuminati-symbol.png') 16 16, auto;
+        }
+      ")),
       fluidRow(
-        column(6, uiOutput("subjectProfile1")),
-        column(6, uiOutput("subjectProfile2"))
+        column(1,
+          radioButtons("method", "Ordination", choices = c("PCA", "NMDS"), inline = TRUE),
+          selectInput("dist_method", "Similarity index",
+                      choices = c("Euclidean", "Manhattan", "Cosine"),
+                      selected = "Euclidean"),
+          numericInput("nmds_seed", "NMDS Seed", value = 42),
+          uiOutput("axis_select_ui"),
+          radioButtons("selectedTrait", "Highlight Trait", choices = c("None", binary_vars), selected = "None")
+        ),
+        column(7,
+          div(id = "skyplot-wrapper", plotlyOutput("skyPlot", height = "1000px"))
+        ),
+        column(4,
+          uiOutput("similarityPanel"),
+          fluidRow(
+            column(6, uiOutput("subjectProfile1")),
+            column(6, uiOutput("subjectProfile2"))
+          )
+        )
+      ),
+      fluidRow(
+        column(12,
+          tags$h4("Gurometry Scores by Decoder"),
+          uiOutput("decoderScores1"),
+          tags$hr(style = "border-color: white;"),
+          uiOutput("decoderScores2")
+        )
+      ),
+      tags$div(
+        style = "margin-top: 20px; font-size: 12px; text-align: center; color: gray;",
+        HTML('• Gurometry by Chris Kavanagh and Matt Browne, from the <a href="https://decodingthegurus.com" style="color: #F4C542;" target="_blank">Decoding the Gurus</a> podcast<br>'),
+        HTML('Cursor icon by <a href="https://icons8.com/icon/123267/illuminati" style="color: #F4C542;" target="_blank">Icons8</a>')
+      )
+    ),
+    tabPanel(
+      "About the ordination",
+      tags$div(
+        style = "padding: 16px; max-width: 900px;",
+        tags$h3("How the ordination works"),
+        tags$p("You can choose a similarity index (Euclidean, Manhattan, or Cosine). The app computes a distance matrix using that index and applies an ordination method:"),
+        tags$ul(
+          tags$li(tags$b("PCA tab = PCoA:"), " we perform Principal Coordinates Analysis (PCoA) on the chosen distance matrix via ",
+                  tags$code("vegan::capscale(comm ~ 1, distance = ...)"), "."),
+          tags$li(tags$b("NMDS tab:"), " we run non-metric multidimensional scaling via ",
+                  tags$code("vegan::metaMDS(comm, distance = ...)"), ".")
+        ),
+        tags$h4("Cosine option"),
+        tags$p("For Cosine, rows are first scaled to unit length with ",
+               tags$code("vegan::decostand(method = 'normalize', MARGIN = 1)"),
+               ", then Euclidean distances on these unit vectors are used. On unit vectors, Euclidean distance is a monotonic transform of Cosine similarity."),
+        tags$h4("Euclidean & Manhattan options"),
+        tags$p("For Euclidean and Manhattan, raw attribute profiles are used directly with the chosen distance."),
+        tags$h4("Similarity % in the side panel"),
+        tags$p("The side panel shows the similarity between the two selected gurus as a percentage: ",
+               "for Euclidean and Manhattan this is a linear rescale of distance relative to the 0–5 score range; ",
+               "for Cosine it is the cosine similarity × 100%.")
       )
     )
-  ),
-
-  fluidRow(
-    column(12,
-      tags$h4("Gurometry Scores by Decoder"),
-      uiOutput("decoderScores1"),
-      tags$hr(style = "border-color: white;"),
-      uiOutput("decoderScores2")
-    )
-  ),
-
-  # Credits
-  tags$div(
-    style = "margin-top: 20px; font-size: 12px; text-align: center; color: gray;",
-    HTML('• Gurometry by Chris Kavanagh and Matt Browne, from the <a href="https://decodingthegurus.com" style="color: #F4C542;" target="_blank">Decoding the Gurus</a> podcast<br>'),
-    HTML('Cursor icon by <a href="https://icons8.com/icon/123267/illuminati" style="color: #F4C542;" target="_blank">Icons8</a>')
   )
 )
 
@@ -194,25 +251,33 @@ server <- function(input, output, session) {
     )
   })
 
-  # --- Ordination based on cosine distance everywhere ---
+  # Prepare community matrix based on selected similarity index
+  get_comm_for_distance <- reactive({
+    dm <- tolower(input$dist_method)
+    if (dm == "cosine") {
+      vegan::decostand(as.matrix(aspect_data), method = "normalize", MARGIN = 1)
+    } else {
+      as.matrix(aspect_data)
+    }
+  })
+
+  # --- Ordination based on selected index ---
   current_ord <- reactive({
-    # Normalize rows to unit length so Euclidean distance == cosine distance transform
-    norm_data <- vegan::decostand(as.matrix(aspect_data), method = "normalize", MARGIN = 1)
+    dm <- tolower(input$dist_method)
+    comm <- get_comm_for_distance()
+    dist_method <- if (dm == "cosine") "euclidean" else dm
 
     if (input$method == "PCA") {
-      # Unconstrained PCoA via capscale on Euclidean distances of normalized data
-      vegan::capscale(norm_data ~ 1, distance = "euclidean", add = FALSE)
+      vegan::capscale(comm ~ 1, distance = dist_method, add = FALSE)
     } else {
-      # NMDS on the same cosine distances (Euclidean on normalized rows)
       set.seed(input$nmds_seed)
-      vegan::metaMDS(norm_data, distance = "euclidean", trymax = 500, k = 2, autotransform = FALSE)
+      vegan::metaMDS(comm, distance = dist_method, trymax = 500, k = 2, autotransform = FALSE)
     }
   })
 
   site_scores <- reactive({
     ord <- current_ord()
     s <- scores(ord, display = "sites")
-    # Name columns depending on method
     colnames(s) <- if (input$method == "PCA") paste0("PCoA", seq_len(ncol(s))) else paste0("NMDS", seq_len(ncol(s)))
     df <- as.data.frame(s)
     df$Subject <- rownames(s)
@@ -250,7 +315,6 @@ server <- function(input, output, session) {
         axis.title = element_text(color = "white")
       )
 
-    # Overlay highlight for selected gurus
     overlay <- base +
       geom_point(
         data = subset(df, IsSelected),
@@ -288,7 +352,7 @@ server <- function(input, output, session) {
     }
   })
 
-  # Cosine % similarity panel (vegan-based)
+  # Similarity panel (reflects selected index) + Wikipedia link
   output$similarityPanel <- renderUI({
     sel <- selected_subjects()
     if (length(sel) < 2) return(NULL)
@@ -296,12 +360,17 @@ server <- function(input, output, session) {
     a <- combined_data %>% dplyr::filter(Subject == sel[1]) %>% dplyr::select(all_of(aspect_vars))
     b <- combined_data %>% dplyr::filter(Subject == sel[2]) %>% dplyr::select(all_of(aspect_vars))
 
-    sim <- cosine_pct_vegan(as.numeric(a[1, ]), as.numeric(b[1, ]))
+    dm <- tolower(input$dist_method)
+    sim <- distance_pct(as.numeric(a[1, ]), as.numeric(b[1, ]), dm)
     sim_txt <- if (is.na(sim)) "—" else sprintf("%.1f%%", sim)
+    meta <- index_meta(dm)
 
     tags$div(
       style = "margin-bottom: 12px; padding: 10px; border: 1px solid #444; border-radius: 8px; background:#111;",
-      tags$h4("Cosine Similarity", style = "margin-top:0;"),
+      tags$h4(
+        tags$a(href = meta$url, target = "_blank", style = "color:#F4C542; text-decoration: none;", meta$label),
+        style = "margin-top:0;"
+      ),
       tags$p(HTML(sprintf("<b>%s</b> \u2194 <b>%s</b>: <span style='color:#F4C542;font-size:1.2em;'>%s</span>",
                           sel[1], sel[2], sim_txt)))
     )
