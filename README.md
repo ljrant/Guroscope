@@ -6,7 +6,7 @@ Screenshot of Guroscope:
 
 ## Features of the app
 - Data pulled (and cleaned) directly from Google Sheets  
-- Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. by default PCA1 and PCA2 axis are used for ordination as PCA captures most of the differences between gurometry scores most of the variation is captured by PCA1 meaning high scoring gurus cluster on one end while low scoring gurus on the other end of PCA1. 
+- Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. 
 - Clickable stars (gurus) to explore individual profiles. The Guru profiles view on right hand panel. individual gurometry scores by different decoders displayed in bottom panel as table.
 - Binary traits (e.g., "Monomania", "Broicity") color-coded may be highligted as different coloured stars in the "guroscape".
 - May be  deployed on a website using [R Shiny](https://shiny.posit.co/)
