@@ -5,14 +5,17 @@ install_and_load <- function(pkgs) {
     library(pkg, character.only = TRUE)
   }
 }
-install_and_load(c("googlesheets4", "dplyr", "readr", "stringr", "shiny", "vegan", "ggplot2", "plotly", "RColorBrewer", "tidyr", "ggrepel", "bslib"))
+install_and_load(c("googlesheets4", "dplyr", "readr", "stringr", "shiny",
+                   "vegan", "ggplot2", "plotly", "RColorBrewer", "tidyr",
+                   "ggrepel", "bslib"))
 
 # ---- 2. Read Google Sheet with all values as characters ----
 gs4_deauth()
 url <- "https://docs.google.com/spreadsheets/d/1Oe-af4_OmzLJavktcSKGfP0wmxCX0ppP8n_Tvi9l_yc"
 raw <- read_sheet(url, col_types = "c", col_names = FALSE, skip = 1)
 
-raw <- raw %>% mutate(across(everything(), ~ str_replace_all(., c("\u00bd" = "0.5", "1/2" = "0.5"))))
+raw <- raw %>%
+  mutate(across(everything(), ~ str_replace_all(., c("\u00bd" = "0.5", "1/2" = "0.5"))))
 
 # ---- 3. Extract decoder blocks ----
 decoder_rows <- which(raw[[1]] %in% c("CK", "MB", "RK"))
@@ -105,7 +108,23 @@ aspect_data <- aspect_data[rowSums(is.na(aspect_data)) < length(aspect_vars), ]
 aspect_data <- aspect_data[, apply(aspect_data, 2, function(x) var(x, na.rm = TRUE) > 0)]
 rownames(aspect_data) <- combined_data$Subject
 
-# ---- 7. Shiny App with Plotly and always-visible names ----
+# ---- 6b. Cosine % similarity using vegan (normalize + vegdist) ----
+# Normalize rows -> Euclidean distance -> convert to cosine similarity
+cosine_pct_vegan <- function(x, y) {
+  xy <- rbind(x, y)
+  ok <- stats::complete.cases(t(xy))
+  if (!any(ok)) return(NA_real_)
+  xy <- xy[, ok, drop = FALSE]
+  if (ncol(xy) == 0) return(NA_real_)
+  if (all(xy[1, ] == 0, na.rm = TRUE) && all(xy[2, ] == 0, na.rm = TRUE)) return(100)
+  stand <- vegan::decostand(xy, method = "normalize", MARGIN = 1)
+  if (any(!is.finite(stand))) return(0)
+  d <- as.numeric(vegan::vegdist(stand, method = "euclidean"))
+  cos_sim <- 1 - (d^2) / 2
+  100 * max(min(cos_sim, 1), 0)
+}
+
+# ---- 7. Shiny App (cosine-based ordination) ----
 ui <- fluidPage(
   theme = bslib::bs_theme(
     version = 5,
@@ -136,6 +155,7 @@ ui <- fluidPage(
       div(id = "skyplot-wrapper", plotlyOutput("skyPlot", height = "1000px"))
     ),
     column(4,
+      uiOutput("similarityPanel"),
       fluidRow(
         column(6, uiOutput("subjectProfile1")),
         column(6, uiOutput("subjectProfile2"))
@@ -161,29 +181,39 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  selected_subjects <- reactiveVal(c())
+  # Two random subjects by default
+  all_subjects <- combined_data$Subject
+  set.seed(42)
+  selected_subjects <- reactiveVal(sample(all_subjects, 2))
 
   output$axis_select_ui <- renderUI({
-    axes <- if (input$method == "PCA") c("PCA1", "PCA2") else c("NMDS1", "NMDS2")
+    axes <- if (input$method == "PCA") c("PCoA1", "PCoA2") else c("NMDS1", "NMDS2")
     tagList(
       selectInput("axis1", "X Axis", choices = axes, selected = axes[1]),
       selectInput("axis2", "Y Axis", choices = axes, selected = axes[2])
     )
   })
 
+  # --- Ordination based on cosine distance everywhere ---
   current_ord <- reactive({
+    # Normalize rows to unit length so Euclidean distance == cosine distance transform
+    norm_data <- vegan::decostand(as.matrix(aspect_data), method = "normalize", MARGIN = 1)
+
     if (input$method == "PCA") {
-      rda(aspect_data, scale = TRUE)
+      # Unconstrained PCoA via capscale on Euclidean distances of normalized data
+      vegan::capscale(norm_data ~ 1, distance = "euclidean", add = FALSE)
     } else {
+      # NMDS on the same cosine distances (Euclidean on normalized rows)
       set.seed(input$nmds_seed)
-      metaMDS(aspect_data, distance = "euclidean", trymax = 500, k = 2, autotransform = FALSE)
+      vegan::metaMDS(norm_data, distance = "euclidean", trymax = 500, k = 2, autotransform = FALSE)
     }
   })
 
   site_scores <- reactive({
     ord <- current_ord()
     s <- scores(ord, display = "sites")
-    colnames(s) <- if (input$method == "PCA") paste0("PCA", seq_len(ncol(s))) else paste0("NMDS", seq_len(ncol(s)))
+    # Name columns depending on method
+    colnames(s) <- if (input$method == "PCA") paste0("PCoA", seq_len(ncol(s))) else paste0("NMDS", seq_len(ncol(s)))
     df <- as.data.frame(s)
     df$Subject <- rownames(s)
     index <- match(df$Subject, combined_data$Subject)
@@ -195,6 +225,7 @@ server <- function(input, output, session) {
     } else {
       "None"
     }
+    df$IsSelected <- df$Subject %in% selected_subjects()
     df
   })
 
@@ -203,7 +234,7 @@ server <- function(input, output, session) {
     palette <- c("None" = "gray60")
     if (input$selectedTrait != "None") palette[input$selectedTrait] <- "orange"
 
-    p <- ggplot(df, aes_string(x = input$axis1, y = input$axis2)) +
+    base <- ggplot(df, aes_string(x = input$axis1, y = input$axis2)) +
       geom_point(aes(color = TraitColor, alpha = Percentage, size = Average, key = Subject, text = Subject), shape = 8) +
       scale_color_manual(values = palette) +
       scale_alpha(range = c(0.1, 1)) +
@@ -219,7 +250,15 @@ server <- function(input, output, session) {
         axis.title = element_text(color = "white")
       )
 
-    gg <- ggplotly(p, tooltip = "text") %>% layout(dragmode = "zoom")
+    # Overlay highlight for selected gurus
+    overlay <- base +
+      geom_point(
+        data = subset(df, IsSelected),
+        aes_string(x = input$axis1, y = input$axis2, key = "Subject", text = "Subject"),
+        shape = 21, size = 8, stroke = 2, color = "cyan", fill = NA
+      )
+
+    gg <- ggplotly(overlay, tooltip = "text") %>% layout(dragmode = "zoom")
 
     gg %>% add_text(
       data = df,
@@ -249,12 +288,31 @@ server <- function(input, output, session) {
     }
   })
 
+  # Cosine % similarity panel (vegan-based)
+  output$similarityPanel <- renderUI({
+    sel <- selected_subjects()
+    if (length(sel) < 2) return(NULL)
+
+    a <- combined_data %>% dplyr::filter(Subject == sel[1]) %>% dplyr::select(all_of(aspect_vars))
+    b <- combined_data %>% dplyr::filter(Subject == sel[2]) %>% dplyr::select(all_of(aspect_vars))
+
+    sim <- cosine_pct_vegan(as.numeric(a[1, ]), as.numeric(b[1, ]))
+    sim_txt <- if (is.na(sim)) "—" else sprintf("%.1f%%", sim)
+
+    tags$div(
+      style = "margin-bottom: 12px; padding: 10px; border: 1px solid #444; border-radius: 8px; background:#111;",
+      tags$h4("Cosine Similarity", style = "margin-top:0;"),
+      tags$p(HTML(sprintf("<b>%s</b> \u2194 <b>%s</b>: <span style='color:#F4C542;font-size:1.2em;'>%s</span>",
+                          sel[1], sel[2], sim_txt)))
+    )
+  })
 
   make_profile_ui <- function(subj) {
     if (is.null(subj)) return(NULL)
     data <- combined_data %>% filter(Subject == subj)
     aspects <- data[aspect_vars]
     binaries <- data[binary_vars]
+    is_active <- subj %in% selected_subjects()
 
     trait_display <- lapply(names(binaries), function(name) {
       val <- binaries[[name]]
@@ -281,7 +339,7 @@ server <- function(input, output, session) {
     })
 
     tagList(
-      tags$h4(subj),
+      tags$h4(subj, style = if (is_active) "color:#F4C542;" else NULL),
       tags$p(sprintf("Gurometer %%: %.1f%%", data$Percentage)),
       tags$p(sprintf("Average Score: %.2f", data$Average)),
 
@@ -330,14 +388,7 @@ server <- function(input, output, session) {
       tagList(tags$h5(selected[2]), renderTable(tbl, digits = 2))
     }
   })
-
-
-
 }
 
-#run the app
+# run the app
 guroscope <- shinyApp(ui, server)
-guroscope
-
-
-
