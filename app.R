@@ -198,7 +198,7 @@ ui <- fluidPage(
       ),
       fluidRow(
         column(12,
-          tags$h4("Gurometry Scores by Decoder"),
+          tags$h4("Raw Gurometry Scores per Decoder (Note: ordination and similarity use per-attribute averages across available decoders.)"),
           uiOutput("decoderScores1"),
           tags$hr(style = "border-color: white;"),
           uiOutput("decoderScores2")
@@ -233,7 +233,7 @@ ui <- fluidPage(
           tags$li(tags$b("NMDS tab:"), " Non-metric multidimensional scaling is run using ", tags$code("vegan::metaMDS(comm, distance = ...)"), ", which preserves the rank order of distances.")
         ),
         
-        tags$h4("Distance index options"),
+        tags$h4("Available similarity index options"),
         tags$ul(
           tags$li(tags$b("Cosine:"), " Ratings are first scaled to unit length with ", tags$code("vegan::decostand(method = 'normalize', MARGIN = 1)"),
                   ", then Euclidean distances on these unit vectors are computed. On unit vectors, Euclidean distance is a monotonic transform of Cosine similarity."),
@@ -242,7 +242,7 @@ ui <- fluidPage(
         ),
         
         tags$h4("Similarity % in the side panel"),
-        tags$p("When you select exactly two gurus, the side panel shows their similarity as a percentage:"),
+        tags$p("When you select  two gurus, the side panel shows their similarity as a percentage. Similarities are computed from per-attribute averages across available decoders."),
         tags$ul(
           tags$li("For Euclidean and Manhattan: a linear rescale of the distance relative to the maximum possible distance given the 0–5 score range."),
           tags$li("For Cosine: the cosine similarity multiplied by 100%.")
