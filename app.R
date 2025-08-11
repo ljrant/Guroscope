@@ -198,7 +198,7 @@ ui <- fluidPage(
       ),
       fluidRow(
         column(12,
-          tags$h4("Raw Gurometry Scores per Decoder (Note: ordination and similarity use per-attribute averages across available decoders.)"),
+          tags$h4("Tables below show the raw Gurometry Scores per Decoder extracted from the google sheets (Note: The ordination plot above and similarity use per-attribute averages across available decoders.)"),
           uiOutput("decoderScores1"),
           tags$hr(style = "border-color: white;"),
           uiOutput("decoderScores2")
