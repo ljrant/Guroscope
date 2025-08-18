@@ -8,47 +8,18 @@ For plotting the 2D Gurusphere, gurometry scores from all decoders are averaged,
 
 Features
 
-Data pulled and cleaned directly from Google Sheets (see precompute.R)
-
-Interactive Gurusphere (2D ordination plot with selectable distance metrics)
-
-Clickable stars (gurus) to explore individual profiles
-
-Guru profile comparison in the right-hand panel; raw decoder scores table below
-
-Binary bonus traits (e.g., Monomania, Broicity) can be highlighted as colored stars in the Gurusphere
-
-Deployable to a server or website using R Shiny
-
-Installation
-
-Install R and RStudio.
-
-Install the required packages in R:
-
-install.packages(c(
-  "shiny", "bslib", "dplyr", "tidyr", "readr", "stringr",
-  "googlesheets4", "vegan", "ggplot2", "RColorBrewer", "ggrepel", "plotly"
-))
-
-Clone this repository:
-
-git clone https://github.com/ljrant/Guroscope.git
-
-
-Run the app from RStudio or the R console:
-
-shiny::runApp("Guroscope")
+  Data pulled and cleaned directly from Google Sheets (see precompute.R)
+  Interactive Gurusphere (2D ordination plot with selectable distance metrics)
+  Clickable stars (gurus) to explore individual profiles
+  Guru profile comparison in the right-hand panel; raw decoder scores table below
+  Binary bonus traits (e.g., Monomania, Broicity) can be highlighted as colored stars in the Gurusphere
 
 The app structure is modular:
 
-precompute.R – loads and processes Google Sheets data
-
-global.R – shared variables and constants
-
-ui.R – defines the user interface
-
-server.R – server logic
+  precompute.R – loads and processes Google Sheets data into separate files required by server.R and ui.R -> this needs to be run once locally before deploying server to generate the required distance matrices. 
+  global.R – shared variables and constants
+  ui.R – defines the user interface ... mainly about page
+  server.R – server logic <-- most of the ui is handled here
 
 Data Source
 
