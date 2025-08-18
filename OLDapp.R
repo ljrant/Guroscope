@@ -1,3 +1,6 @@
+
+#This is the old version of the guroscope app for simple copy-paste run not usin precomputed values for hosting. It pulls the data directly from the googlesheets.
+
 # ---- 1. Load Required Packages ----
 install_and_load <- function(pkgs) {
   for (pkg in pkgs) {
