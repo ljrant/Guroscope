@@ -305,14 +305,19 @@ observeEvent(sky_click_d(), {
           uiOutput("comparisonPlotUI"),
           uiOutput("bonusTraitsBelow"),
           tags$hr(style = "border-color:#333; margin:8px 0;"),
-          tags$button(
-            class = "btn btn-sm btn-outline-light", type = "button",
-            `data-bs-toggle` = "collapse", `data-bs-target` = "#decoderBox",
-            "Display raw decoder scores"
-          ),
-          div(
-            id = "decoderBox", class = "collapse",
-            div(style="margin-top:8px;", uiOutput("decoderScoresTable"))
+          
+          # Collapsible Raw Decoder Scores box
+          tags$div(
+            style = "margin-top:8px;",
+            tags$button(
+              class = "btn btn-sm btn-outline-secondary", type = "button",
+              `data-bs-toggle` = "collapse", `data-bs-target` = "#decoderBox",
+              "Raw decoder scores"
+            ),
+            div(
+              id = "decoderBox", class = "collapse",
+              div(style="margin-top:8px;", uiOutput("decoderScoresTable"))
+            )
           )
       )
     )
