@@ -299,7 +299,7 @@ observeEvent(sky_click_d(), {
           tags$hr(style = "border-color:#333; margin:8px 0;"),
           div(class = "d-flex justify-content-end align-items-center",
               radioButtons("compare_mode", NULL,
-                           choices = c("Differences", "Raw values"),
+                           choices = c("Differences", "Average scores"),
                            selected = "Differences", inline = TRUE)
           ),
           uiOutput("comparisonPlotUI"),
