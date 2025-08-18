@@ -1,62 +1,76 @@
-# Guroscope
-Interactive R Shiny web app that visualizes Gurometry score profiles of secular gurus rated by the Decoding the Gurus podcast using ordination methods In the app the Gurus appear as selectable "stars" in 2D "guruscape" where similarly scored gurus group close together. clicking the stars allows side-by-side comparisons of Gurus profiles ( decoder averages). The gurometry scores per decoder are displayed as table below the "guruscape". For plotting the 2d "guruscape", the gurometry scores from all decoders are first averaged and then dimension reduction technique, currently the first two major axis of PCA are used for ordination.
+Guroscope
 
-Screenshot of Guroscope:
-![Screenshot of Guroscope](SCREENSHOT.png)
+Interactive R Shiny web app that visualizes Gurometry score profiles of secular gurus rated by the Decoding the Gurus podcast using ordination methods.
 
-## Features of the app
-- Data pulled (and cleaned) directly from Google Sheets  
-- Interactive Guruscape  (2D ordination plot using different ordination methods). Currently only Principal Component Analysis PCA is functional. 
-- Clickable stars (gurus) to explore individual profiles. The Guru profiles view on right hand panel. individual gurometry scores by different decoders displayed in bottom panel as table.
-- Binary traits (e.g., "Monomania", "Broicity") color-coded may be highligted as different coloured stars in the "guroscape".
-- May be  deployed on a website using [R Shiny](https://shiny.posit.co/)
+In the app, gurus appear as selectable “stars” in a 2D Gurusphere where similarly scored figures group closer together. Clicking a star allows side-by-side comparison of guru profiles (decoder averages). Individual gurometry scores by each decoder are also displayed in a table below the comparison view.
 
-## Installation
+For plotting the 2D Gurusphere, gurometry scores from all decoders are averaged, and then a dimension reduction technique (currently the first two major axes of PCA) is used for ordination.
 
-1.Make sure you have R and RStudio installed. 
+Features
 
-2.Then install required packages in R:
+Data pulled and cleaned directly from Google Sheets (see precompute.R)
 
-install.packages(c("shiny", "bslib", "dplyr", "tidyr", "readr", "stringr",
-                   "googlesheets4", "vegan", "ggplot2", "RColorBrewer", "ggrepel"))
-                
-3. Clone the repo and run the app from your R console or RStudio. Or simply copy paste all the code in R-studio and run the app.R script if all dependencies are installed.
+Interactive Gurusphere (2D ordination plot with selectable distance metrics)
 
-### Data Source
+Clickable stars (gurus) to explore individual profiles
+
+Guru profile comparison in the right-hand panel; raw decoder scores table below
+
+Binary bonus traits (e.g., Monomania, Broicity) can be highlighted as colored stars in the Gurusphere
+
+Deployable to a server or website using R Shiny
+
+Installation
+
+Install R and RStudio.
+
+Install the required packages in R:
+
+install.packages(c(
+  "shiny", "bslib", "dplyr", "tidyr", "readr", "stringr",
+  "googlesheets4", "vegan", "ggplot2", "RColorBrewer", "ggrepel", "plotly"
+))
+
+Clone this repository:
+
+git clone https://github.com/ljrant/Guroscope.git
+
+
+Run the app from RStudio or the R console:
+
+shiny::runApp("Guroscope")
+
+The app structure is modular:
+
+precompute.R – loads and processes Google Sheets data
+
+global.R – shared variables and constants
+
+ui.R – defines the user interface
+
+server.R – server logic
+
+Data Source
+
 Data is fetched directly from this public Google Sheet:
-[Gurometer Scores - Decoding the Gurus](https://docs.google.com/spreadsheets/d/1Oe-af4_OmzLJavktcSKGfP0wmxCX0ppP8n_Tvi9l_yc/edit?gid=0#gid=0) 
+Gurometer Scores – Decoding the Gurus
 
-#### Used libraries:
+Used libraries
+
 R Shiny – Interactive UI and web deployment
+
 ggplot2 – Visualization
+
 vegan – Ordination (PCA/NMDS)
+
 googlesheets4 – Real-time data import
+
 bslib – Custom Bootstrap 5 theme
 
+plotly – Interactive plots
 
-#### Work in progress::: list of potential features & stuff to be added
+Credits
 
-Main plot / "Guruscape"
-* Adjust the cursor icon for easier selection of gurus from the guruscape for comparisons
-* add functionality to plot Correlation circle as a "minimap" to aid in interpretation of the ordination axis
-* adding functional NMDS ordination and maybe some other ordination methods
+Gurometry by Chris Kavanagh & Matt Browne (Decoding the Gurus podcast)
 
-Guru sidepanel (right panel): 
-* Rework how gurometry scores are compared and visualized. get rid of redundant headers. 
-* Add Automated highlighting  of the main differences between chosen Gurus gurumetry scores 
-
-Other stuff
-*separate tab for cluster analysis for some Guru phylogeny visualizations
-
-##### What Is Gurometry?
-
-*Gurometry* is a satirical rating framework developed by [Chris Kavanagh](https://twitter.com/C_Kavanagh) and [Matt Browne](https://twitter.com/ArthurCDent) for their podcast *Decoding the Gurus*. It rates self-proclaimed intellectuals or “secular gurus” based on recurring traits like "Galaxy Brainness" and "Conspiracy Mongering."
-
-For more on Gurometry, listen to the podcast or view their [Google Sheet](https://docs.google.com/spreadsheets/d/1Oe-af4_OmzLJavktcSKGfP0wmxCX0ppP8n_Tvi9l_yc).
-
-###### Credits
-Gurometry: by Chris Kavanagh & Matt Browne, from the Decoding the Gurus podcast
 Cursor icon: Illuminati icon by Icons8
-
-This project is for entertainment purposes only. It is not affiliated with or endorsed by the Decoding the Gurus podcast.
-
